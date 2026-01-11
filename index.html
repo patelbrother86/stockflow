@@ -14,9 +14,8 @@
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
-        /* Hide scrollbars for app-like feel */
         body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
-        #reader { width: 100%; }
+        #reader { width: 100%; border-radius: 0.5rem; }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans">
@@ -25,37 +24,43 @@
         <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm text-center">
             <img src="icon.svg" class="w-20 h-20 mx-auto mb-4" alt="Logo">
             <h1 class="text-2xl font-bold text-blue-600 mb-6">StockFlow Pro</h1>
-            <input type="text" id="username" placeholder="Username" class="w-full p-3 border rounded mb-4 text-lg">
+            
+            <input type="text" id="username" placeholder="Username" class="w-full p-3 border rounded mb-3 text-lg">
+            <input type="password" id="password" placeholder="Password" class="w-full p-3 border rounded mb-6 text-lg">
+            
             <button onclick="handleLogin()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold text-lg hover:bg-blue-700 transition">Log In</button>
+            <p id="login-error" class="text-red-500 text-sm mt-3 hidden">Invalid Credentials</p>
         </div>
     </div>
 
     <div id="dashboard-view" class="hidden flex flex-col h-screen">
         
-        <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10">
-            <h1 class="font-bold text-xl">StockFlow</h1>
+        <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center">
+            <div>
+                <h1 class="font-bold text-xl">StockFlow</h1>
+                <p id="user-display" class="text-xs text-blue-200">User: -</p>
+            </div>
             <button onclick="logout()" class="text-sm bg-blue-800 px-3 py-1 rounded">Exit</button>
         </header>
 
         <div class="flex-1 overflow-y-auto p-4 pb-24">
             
             <div class="flex space-x-2 mb-4 bg-gray-200 p-1 rounded-lg">
-                <button onclick="switchMode('camera')" id="btn-cam" class="flex-1 py-2 rounded-md bg-white shadow text-sm font-bold">Camera Scan</button>
-                <button onclick="switchMode('hardware')" id="btn-hard" class="flex-1 py-2 rounded-md text-gray-500 text-sm font-bold">Hardware / Manual</button>
+                <button onclick="switchMode('camera')" id="btn-cam" class="flex-1 py-2 rounded-md bg-white shadow text-sm font-bold">Camera</button>
+                <button onclick="switchMode('hardware')" id="btn-hard" class="flex-1 py-2 rounded-md text-gray-500 text-sm font-bold">Scanner Gun</button>
             </div>
 
             <div id="camera-section">
-                <div id="reader" class="rounded-lg overflow-hidden border-2 border-blue-200"></div>
+                <div id="reader" class="overflow-hidden border-2 border-blue-200"></div>
                 <p class="text-center text-gray-500 text-sm mt-2">Point camera at barcode</p>
             </div>
 
             <div id="hardware-section" class="hidden">
                 <label class="block text-gray-700 text-sm font-bold mb-2">Scan or Type Barcode:</label>
                 <div class="flex gap-2">
-                    <input type="text" id="manual-input" class="flex-1 p-4 border-2 border-blue-500 rounded-lg text-xl" placeholder="Click here & Scan" autofocus>
+                    <input type="text" id="manual-input" class="flex-1 p-4 border-2 border-blue-500 rounded-lg text-xl" placeholder="Click & Scan">
                     <button onclick="processManualInput()" class="bg-blue-600 text-white px-4 rounded-lg">GO</button>
                 </div>
-                <p class="text-xs text-gray-400 mt-2">Ensure the box above is clicked before using a laser scanner.</p>
             </div>
 
             <div id="product-card" class="mt-6 bg-white p-5 rounded-xl shadow-md hidden border-l-4 border-blue-500">
@@ -71,17 +76,28 @@
                     </div>
                 </div>
 
-                <div class="mt-6 space-y-3">
+                <div class="mt-6">
                     <button onclick="updateStock('SALE')" class="w-full bg-red-500 text-white py-3 rounded-lg font-bold shadow hover:bg-red-600">Process Sale (-1)</button>
-                    
-                    <div id="admin-controls" class="hidden space-y-3 pt-3 border-t border-gray-200">
-                        <button onclick="updateStock('RESTOCK')" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold shadow hover:bg-green-600">Restock (+1)</button>
-                        <div class="flex gap-2">
-                            <input type="number" id="new-price" placeholder="New Price" class="w-1/2 p-2 border rounded">
-                            <button onclick="updatePrice()" class="w-1/2 bg-gray-700 text-white rounded font-bold">Update Price</button>
-                        </div>
+                </div>
+
+                <div id="admin-controls" class="hidden space-y-3 mt-3 pt-3 border-t border-gray-200">
+                    <button onclick="updateStock('RESTOCK')" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold shadow hover:bg-green-600">Restock (+1)</button>
+                    <div class="flex gap-2">
+                        <input type="number" id="new-price-val" placeholder="New Price" class="w-1/2 p-2 border rounded">
+                        <button onclick="updatePrice()" class="w-1/2 bg-gray-700 text-white rounded font-bold">Update Price</button>
                     </div>
                 </div>
+            </div>
+
+            <div id="add-product-card" class="mt-6 bg-yellow-50 p-5 rounded-xl shadow-md hidden border-l-4 border-yellow-500">
+                <h2 class="text-lg font-bold text-yellow-800 mb-2">Item Not Found</h2>
+                <p class="text-sm text-gray-600 mb-4">Add this new item to inventory?</p>
+                
+                <input type="text" id="new-prod-name" placeholder="Product Name" class="w-full p-2 border rounded mb-2">
+                <input type="number" id="new-prod-price" placeholder="Price" class="w-full p-2 border rounded mb-2">
+                <input type="number" id="new-prod-stock" placeholder="Initial Stock" class="w-full p-2 border rounded mb-4">
+                
+                <button onclick="addNewProduct()" class="w-full bg-yellow-600 text-white py-2 rounded font-bold hover:bg-yellow-700">Add Item</button>
             </div>
             
             <div id="status-msg" class="mt-4 text-center text-sm font-semibold"></div>
@@ -90,43 +106,74 @@
     </div>
 
     <script>
-        // CONFIGURATION
-        const SCRIPT_URL = 'YOUR_GOOGLE_SCRIPT_URL_HERE'; // *** PASTE YOUR URL HERE ***
+        // --- CONFIGURATION ---
+        // TODO: Replace this with your actual Google Apps Script Web App URL
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx3hIkbs8loGsJ0VQyBtYB4PnJl-Lsv1U83x2ENfDuMkM4g937p7Fu3-tOPgIhzRIGTEg/exec'; 
 
-        // STATE
+        // --- STATE ---
         let currentUser = null;
-        let currentRole = null;
-        let currentProduct = null;
+        let currentRole = null; // 'ADMIN' or 'STAFF'
+        let currentBarcode = null;
+        let currentProductData = null;
         let html5QrcodeScanner = null;
-
-        // PWA Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-            .then(() => console.log('Service Worker Registered'));
-        }
 
         // --- AUTHENTICATION ---
         function handleLogin() {
-            const user = document.getElementById('username').value.trim();
-            if(!user) return alert("Enter username");
+            const userIn = document.getElementById('username').value.trim();
+            const passIn = document.getElementById('password').value.trim();
+            const errorMsg = document.getElementById('login-error');
+
+            if(!userIn || !passIn) {
+                errorMsg.innerText = "Please enter username and password";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            // UI Feedback
+            document.querySelector('#login-view button').innerText = "Verifying...";
             
-            // Simple mock login for UI demo. In production, verify with Sheet.
-            // Logic: If username contains 'admin', they are Admin.
-            currentUser = user;
-            currentRole = user.toLowerCase().includes('admin') ? 'ADMIN' : 'STAFF';
-            
-            document.getElementById('login-view').classList.add('hidden');
-            document.getElementById('dashboard-view').classList.remove('hidden');
-            
-            // Start Scanner automatically
-            initScanner();
+            // Send login request to Google Apps Script
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: 'login', username: userIn, password: passIn })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    currentUser = data.username;
+                    currentRole = data.role; // Script should return 'ADMIN' or 'STAFF'
+                    
+                    document.getElementById('user-display').innerText = `${currentUser} (${currentRole})`;
+                    document.getElementById('login-view').classList.add('hidden');
+                    document.getElementById('dashboard-view').classList.remove('hidden');
+                    
+                    initScanner();
+                } else {
+                    errorMsg.innerText = "Invalid Username or Password";
+                    errorMsg.classList.remove('hidden');
+                    document.querySelector('#login-view button').innerText = "Log In";
+                }
+            })
+            .catch(err => {
+                // FALLBACK FOR TESTING IF SCRIPT IS NOT CONNECTED YET
+                console.warn("Using Offline Mock Login");
+                if(userIn.toLowerCase().includes('admin')) {
+                    currentRole = 'ADMIN'; currentUser = 'AdminUser';
+                } else {
+                    currentRole = 'STAFF'; currentUser = 'StaffUser';
+                }
+                document.getElementById('user-display').innerText = `${currentUser} (${currentRole})`;
+                document.getElementById('login-view').classList.add('hidden');
+                document.getElementById('dashboard-view').classList.remove('hidden');
+                initScanner();
+            });
         }
 
         function logout() {
             location.reload();
         }
 
-        // --- TAB SWITCHING ---
+        // --- SCANNER LOGIC ---
         function switchMode(mode) {
             const camSec = document.getElementById('camera-section');
             const hardSec = document.getElementById('hardware-section');
@@ -136,144 +183,176 @@
             if (mode === 'camera') {
                 camSec.classList.remove('hidden');
                 hardSec.classList.add('hidden');
-                btnCam.classList.add('bg-white', 'shadow');
-                btnCam.classList.remove('text-gray-500');
-                btnHard.classList.remove('bg-white', 'shadow');
-                btnHard.classList.add('text-gray-500');
-                // Re-enable scanner if needed
+                btnCam.classList.replace('text-gray-500', 'bg-white');
+                btnCam.classList.add('shadow');
+                btnHard.classList.replace('bg-white', 'text-gray-500');
+                btnHard.classList.remove('shadow');
                 if(html5QrcodeScanner) html5QrcodeScanner.resume();
             } else {
                 camSec.classList.add('hidden');
                 hardSec.classList.remove('hidden');
-                btnHard.classList.add('bg-white', 'shadow');
-                btnHard.classList.remove('text-gray-500');
-                btnCam.classList.remove('bg-white', 'shadow');
-                btnCam.classList.add('text-gray-500');
-                // Pause camera to save battery
+                btnHard.classList.replace('text-gray-500', 'bg-white');
+                btnHard.classList.add('shadow');
+                btnCam.classList.replace('bg-white', 'text-gray-500');
+                btnCam.classList.remove('shadow');
                 if(html5QrcodeScanner) html5QrcodeScanner.pause();
-                // Focus input for hardware scanner
                 setTimeout(() => document.getElementById('manual-input').focus(), 100);
             }
         }
 
-        // --- SCANNING LOGIC ---
         function initScanner() {
-            html5QrcodeScanner = new Html5QrcodeScanner(
-                "reader", 
-                { fps: 10, qrbox: {width: 250, height: 150} }, 
-                /* verbose= */ false
-            );
-            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
+            html5QrcodeScanner.render(onScanSuccess);
         }
 
-        function onScanSuccess(decodedText, decodedResult) {
-            // Handle duplicate scans prevention if needed
-            console.log(`Code matched = ${decodedText}`);
+        function onScanSuccess(decodedText) {
+            if(currentBarcode === decodedText) return; // Prevent double scan
+            currentBarcode = decodedText;
             fetchProductData(decodedText);
-            
-            // Optional: Pause scanning while processing
-            html5QrcodeScanner.pause(); 
-            setTimeout(() => html5QrcodeScanner.resume(), 2000); 
         }
 
-        function onScanFailure(error) {
-            // handle scan failure, usually better to ignore and keep scanning.
-        }
-
-        // Handle Hardware Scanner / Manual Input
-        document.getElementById('manual-input').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') {
-                processManualInput();
-            }
+        document.getElementById('manual-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') processManualInput();
         });
 
         function processManualInput() {
             const code = document.getElementById('manual-input').value;
             if(code) {
+                currentBarcode = code;
                 fetchProductData(code);
-                document.getElementById('manual-input').value = ''; // Clear input
+                document.getElementById('manual-input').value = '';
             }
         }
 
-        // --- API & UI LOGIC ---
+        // --- API & UI ---
         function fetchProductData(barcode) {
-            showStatus("Searching database...", "blue");
+            showStatus("Searching...", "blue");
             document.getElementById('product-card').classList.add('hidden');
+            document.getElementById('add-product-card').classList.add('hidden');
 
-            // Construct payload
-            // NOTE: This assumes your doGet in Apps Script handles 'action=getProduct'
             const url = `${SCRIPT_URL}?action=getProduct&barcode=${barcode}`;
-
+            
             fetch(url)
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
-                if (data.error) {
-                    showStatus("Product not found", "red");
+                if (data.error || !data.name) {
+                    handleItemNotFound(barcode);
                 } else {
                     displayProduct(data);
                 }
             })
             .catch(err => {
-                console.error(err);
-                // MOCK DATA FOR DEMO IF API FAILS (Remove in production)
-                displayProduct({
-                    id: barcode,
-                    name: "Colgate Total 150g",
-                    stock: 45,
-                    price: "$4.50"
-                });
+                console.log("Mocking Item Found for testing");
+                // Remove this mock block in production
+                displayProduct({ name: "Demo Item", stock: 10, price: 5.00 });
             });
         }
 
         function displayProduct(data) {
-            currentProduct = data;
-            
+            currentProductData = data;
             document.getElementById('p-name').innerText = data.name;
             document.getElementById('p-stock').innerText = data.stock;
-            document.getElementById('p-price').innerText = data.price; // Format currency
+            document.getElementById('p-price').innerText = data.price;
             
             document.getElementById('product-card').classList.remove('hidden');
             showStatus("Product Found", "green");
 
-            // Show Admin controls if role is ADMIN
+            // Toggle Admin Controls
+            const adminControls = document.getElementById('admin-controls');
             if (currentRole === 'ADMIN') {
-                document.getElementById('admin-controls').classList.remove('hidden');
+                adminControls.classList.remove('hidden');
             } else {
-                document.getElementById('admin-controls').classList.add('hidden');
+                adminControls.classList.add('hidden');
             }
         }
 
-        function updateStock(type) {
-            if(!currentProduct) return;
-            showStatus("Processing...", "blue");
+        function handleItemNotFound(barcode) {
+            showStatus("Item Not Found", "red");
+            if (currentRole === 'ADMIN') {
+                // Admin can add item
+                document.getElementById('add-product-card').classList.remove('hidden');
+                // Pre-fill defaults
+                document.getElementById('new-prod-name').value = "";
+                document.getElementById('new-prod-price').value = "";
+                document.getElementById('new-prod-stock').value = "";
+            } else {
+                // Staff just sees error
+                showStatus("Item not in system. Ask Admin to add.", "red");
+            }
+        }
 
-            // Send to Google Sheets
+        // --- ACTIONS ---
+        function updateStock(type) {
+            showStatus("Updating...", "blue");
             const payload = {
                 action: 'updateStock',
-                barcode: currentProduct.id,
-                type: type, // 'SALE' or 'RESTOCK'
+                barcode: currentBarcode,
+                type: type,
                 user: currentUser
             };
             
-            // Using fetch(url, {method: 'POST'}) often has CORS issues with GAS.
-            // Standard workaround is using navigator.sendBeacon or no-cors mode, 
-            // but for simple GAS apps, text/plain POST is best.
-            
+            sendData(payload, () => {
+                let stockEl = document.getElementById('p-stock');
+                let current = parseInt(stockEl.innerText);
+                if(type === 'SALE') stockEl.innerText = current - 1;
+                if(type === 'RESTOCK') stockEl.innerText = current + 1;
+                showStatus(type === 'SALE' ? "Sold!" : "Restocked!", "green");
+            });
+        }
+
+        function updatePrice() {
+            const newPrice = document.getElementById('new-price-val').value;
+            if(!newPrice) return alert("Enter price");
+
+            sendData({
+                action: 'updatePrice',
+                barcode: currentBarcode,
+                newPrice: newPrice,
+                user: currentUser
+            }, () => {
+                document.getElementById('p-price').innerText = newPrice;
+                showStatus("Price Updated", "green");
+            });
+        }
+
+        function addNewProduct() {
+            const name = document.getElementById('new-prod-name').value;
+            const price = document.getElementById('new-prod-price').value;
+            const stock = document.getElementById('new-prod-stock').value;
+
+            if(!name || !price || !stock) return alert("Fill all fields");
+
+            sendData({
+                action: 'addProduct',
+                barcode: currentBarcode,
+                name: name,
+                price: price,
+                stock: stock,
+                user: currentUser
+            }, () => {
+                document.getElementById('add-product-card').classList.add('hidden');
+                // Display the newly created item
+                displayProduct({ name, price, stock });
+                showStatus("Item Added Successfully", "green");
+            });
+        }
+
+        function sendData(payload, onSuccess) {
             fetch(SCRIPT_URL, {
                 method: "POST",
                 body: JSON.stringify(payload)
             })
-            .then(res => res.text()) // GAS usually returns text/json string
-            .then(data => {
-                showStatus("Update Successful!", "green");
-                // Update UI locally to reflect change instantly
-                let currentStock = parseInt(document.getElementById('p-stock').innerText);
-                if(type === 'SALE') document.getElementById('p-stock').innerText = currentStock - 1;
-                if(type === 'RESTOCK') document.getElementById('p-stock').innerText = currentStock + 1;
+            .then(res => res.text())
+            .then(txt => {
+                console.log("Server response:", txt);
+                onSuccess();
             })
-            .catch(err => showStatus("Error updating stock", "red"));
+            .catch(err => {
+                console.error(err);
+                showStatus("Connection Error", "red");
+            });
         }
-        
+
         function showStatus(msg, color) {
             const el = document.getElementById('status-msg');
             el.innerText = msg;
