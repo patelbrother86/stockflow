@@ -8,147 +8,66 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        /* Inline Button Spinner */
-        .btn-spinner {
-            display: none;
-            width: 1.2rem;
-            height: 1.2rem;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 0.8s linear infinite;
-            margin-right: 8px;
-        }
+        .btn-spinner { display: none; width: 1.2rem; height: 1.2rem; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite; margin-right: 8px; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .loading .btn-text { opacity: 0.5; }
         .loading .btn-spinner { display: inline-block; }
-        
-        /* Navigation Styles */
         .active-tab { color: #2563eb; border-top: 4px solid #2563eb; background: #eff6ff; }
-        #reader { border: none !important; }
-        #reader__dashboard_section_csr button { background: #2563eb !important; color: white !important; border-radius: 8px !important; padding: 8px 16px !important; text-transform: uppercase; font-size: 12px; font-weight: bold; }
+        
+        /* Hardware Scan Loading Bar */
+        #scan-loader { display: none; height: 4px; background: #e2e8f0; overflow: hidden; border-radius: 2px; }
+        #scan-loader div { width: 30%; height: 100%; background: #2563eb; animation: loading-bar 1s infinite linear; }
+        @keyframes loading-bar { from { margin-left: -30%; } to { margin-left: 100%; } }
     </style>
-</head>
-<body class="bg-gray-50 min-h-screen font-sans">
-
-    <div id="login-view" class="h-screen flex items-center justify-center p-6">
-        <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-sm">
-            <h1 class="text-3xl font-black text-blue-600 mb-2 text-center italic">StockFlow Pro</h1>
-            <p class="text-center text-gray-400 text-sm mb-8">INR Inventory System</p>
-            <input type="text" id="username" placeholder="Username" class="w-full p-4 bg-gray-50 rounded-2xl mb-3 outline-blue-500">
-            <input type="password" id="password" placeholder="Password" class="w-full p-4 bg-gray-50 rounded-2xl mb-6 outline-blue-500">
-            <button id="login-btn" onclick="handleLogin()" class="flex items-center justify-center w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg active:scale-95 transition-all">
-                <div class="btn-spinner"></div>
-                <span class="btn-text">Login</span>
-            </button>
-        </div>
-    </div>
-
-    <div id="main-app" class="hidden flex flex-col h-screen">
-        <header class="bg-white border-b p-4 flex justify-between items-center sticky top-0 z-50">
-            <div>
-                <h1 class="font-black text-blue-600 leading-none">STOCKFLOW</h1>
-                <span id="role-tag" class="text-[9px] font-bold text-gray-400 uppercase tracking-widest"></span>
-            </div>
-            <button onclick="location.reload()" class="bg-gray-100 p-2 rounded-xl text-gray-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 102 0V4a1 1 0 00-1-1zm10.293 9.293a1 1 0 001.414 1.414l3-3a1 1 0 000-1.414l-3-3a1 1 0 10-1.414 1.414L14.586 9H7a1 1 0 100 2h7.586l-1.293 1.293z" clip-rule="evenodd" /></svg>
-            </button>
-        </header>
-
-        <main class="flex-1 overflow-y-auto p-4 pb-32">
-            <div id="tab-content-scan">
-                <div class="flex p-1 bg-gray-200 rounded-2xl mb-4">
-                    <button id="btn-cam" onclick="switchScanner('camera')" class="flex-1 py-3 rounded-xl text-xs font-black bg-white shadow uppercase">Camera</button>
-                    <button id="btn-hard" onclick="switchScanner('hardware')" class="flex-1 py-3 rounded-xl text-xs font-black text-gray-500 uppercase">Scanner Gun</button>
-                </div>
-
-                <div id="camera-box" class="rounded-3xl overflow-hidden shadow-lg border-4 border-white"><div id="reader"></div></div>
-                <div id="hardware-box" class="hidden">
-                    <input type="text" id="manual-input" class="w-full p-6 bg-white border-2 border-blue-600 rounded-3xl font-black text-2xl text-center outline-none" placeholder="AWAITING GUN SCAN">
-                </div>
-
-                <div id="staff-view" class="hidden mt-6">
-                    <div id="cart-list" class="space-y-3"></div>
-                    <div id="empty-cart" class="text-center py-20 text-gray-300 italic">No items scanned.</div>
-                </div>
-
-                <div id="admin-view" class="hidden mt-6">
-                    <div id="adm-update-card" class="bg-white p-6 rounded-3xl shadow-lg border-t-8 border-blue-600 hidden">
-                        <p id="adm-pname" class="font-black text-lg text-gray-800 mb-4"></p>
-                        <div class="grid grid-cols-2 gap-4 mb-6">
-                            <div><label class="text-[10px] font-bold text-gray-400 uppercase">Stock Count</label><input type="number" id="adm-stock" class="w-full p-4 bg-gray-50 rounded-xl font-bold"></div>
-                            <div><label class="text-[10px] font-bold text-gray-400 uppercase">Price (₹)</label><input type="number" id="adm-price" class="w-full p-4 bg-gray-50 rounded-xl font-bold"></div>
-                        </div>
-                        <button id="adm-save-btn" onclick="adminSave('update')" class="flex items-center justify-center w-full bg-blue-600 text-white py-4 rounded-xl font-bold">
-                            <div class="btn-spinner"></div><span class="btn-text">Update Inventory</span>
-                        </button>
-                    </div>
-
-                    <div id="adm-new-card" class="bg-white p-6 rounded-3xl shadow-lg border-t-8 border-green-500 hidden">
-                        <h3 class="text-green-600 font-black text-[10px] uppercase mb-4 tracking-widest">New Product Registration</h3>
-                        <input type="text" id="new-name" placeholder="Item Name" class="w-full p-4 bg-gray-50 rounded-xl mb-4 font-bold">
-                        <div class="grid grid-cols-2 gap-4 mb-6">
-                            <input type="number" id="new-stock" placeholder="Stock" class="w-full p-4 bg-gray-50 rounded-xl font-bold">
-                            <input type="number" id="new-price" placeholder="Price ₹" class="w-full p-4 bg-gray-50 rounded-xl font-bold">
-                        </div>
-                        <button id="adm-add-btn" onclick="adminSave('add')" class="flex items-center justify-center w-full bg-green-600 text-white py-4 rounded-xl font-bold">
-                            <div class="btn-spinner"></div><span class="btn-text">Add Item</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="tab-content-history" class="hidden">
-                <h2 class="font-black text-gray-800 mb-6 text-center text-xs uppercase tracking-widest">Today's Activity</h2>
-                <div id="activity-log" class="space-y-3"></div>
-            </div>
-        </main>
-
-        <div id="checkout-bar" class="fixed bottom-20 left-4 right-4 bg-gray-900 p-5 rounded-3xl shadow-2xl hidden flex justify-between items-center z-40">
-            <div><p class="text-gray-400 text-[10px] font-bold uppercase">Total Order</p><p id="total-val" class="text-2xl font-black text-white leading-none">₹0</p></div>
-            <button id="checkout-btn" onclick="checkout()" class="flex items-center justify-center bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold">
-                <div class="btn-spinner"></div><span class="btn-text">Checkout</span>
-            </button>
-        </div>
-
-        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex h-20 z-50">
-            <button onclick="showTab('scan')" id="tab-btn-scan" class="flex-1 flex flex-col items-center justify-center active-tab">
-                <span class="text-[10px] font-black uppercase">Scanner</span>
-            </button>
-            <button onclick="showTab('history')" id="tab-btn-history" class="flex-1 flex flex-col items-center justify-center text-gray-400">
-                <span class="text-[10px] font-black uppercase">History</span>
-            </button>
-        </nav>
-    </div>
 
     <script>
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx3hIkbs8loGsJ0VQyBtYB4PnJl-Lsv1U83x2ENfDuMkM4g937p7Fu3-tOPgIhzRIGTEg/exec'; 
         let currentUser, currentRole, cart = [], htmlScanner, activeBarcode;
 
+        // --- SESSION LOGIC ---
+        window.onload = () => {
+            const session = JSON.parse(localStorage.getItem('sf_session'));
+            if (session) {
+                const now = new Date().getTime();
+                const threeHours = 3 * 60 * 60 * 1000;
+                if (now - session.time < threeHours) {
+                    autoLogin(session.user, session.role);
+                } else {
+                    localStorage.removeItem('sf_session');
+                }
+            }
+        };
+
+        function autoLogin(user, role) {
+            currentUser = user; currentRole = role;
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            document.getElementById('role-tag').innerText = currentRole;
+            if(currentRole === 'STAFF') document.getElementById('staff-view').classList.remove('hidden');
+            else document.getElementById('admin-view').classList.remove('hidden');
+            initScanner();
+        }
+
         function setBtnLoading(btnId, isLoading) {
             const btn = document.getElementById(btnId);
-            if (!btn) return;
-            isLoading ? btn.classList.add('loading') : btn.classList.remove('loading');
-            btn.disabled = isLoading;
+            if (btn) {
+                isLoading ? btn.classList.add('loading') : btn.classList.remove('loading');
+                btn.disabled = isLoading;
+            }
         }
 
         async function handleLogin() {
             const u = document.getElementById('username').value;
             const p = document.getElementById('password').value;
-            if(!u || !p) return alert("Missing info");
+            if(!u || !p) return alert("Enter credentials");
             
             setBtnLoading('login-btn', true);
             try {
                 const res = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', username: u, password: p }) });
                 const data = await res.json();
                 if(data.success) {
-                    currentUser = data.username; currentRole = data.role;
-                    document.getElementById('login-view').classList.add('hidden');
-                    document.getElementById('main-app').classList.remove('hidden');
-                    document.getElementById('role-tag').innerText = currentRole;
-                    if(currentRole === 'STAFF') document.getElementById('staff-view').classList.remove('hidden');
-                    else document.getElementById('admin-view').classList.remove('hidden');
-                    initScanner();
+                    localStorage.setItem('sf_session', JSON.stringify({ user: data.username, role: data.role, time: new Date().getTime() }));
+                    autoLogin(data.username, data.role);
                 } else alert("Invalid Login");
             } catch (e) { alert("Server Error"); }
             setBtnLoading('login-btn', false);
@@ -162,25 +81,29 @@
         function switchScanner(mode) {
             document.getElementById('camera-box').classList.toggle('hidden', mode === 'hardware');
             document.getElementById('hardware-box').classList.toggle('hidden', mode === 'camera');
-            document.getElementById('btn-cam').className = mode === 'camera' ? 'flex-1 py-3 rounded-xl text-xs font-black bg-white shadow uppercase' : 'flex-1 py-3 rounded-xl text-xs font-black text-gray-500 uppercase';
-            document.getElementById('btn-hard').className = mode === 'hardware' ? 'flex-1 py-3 rounded-xl text-xs font-black bg-white shadow uppercase' : 'flex-1 py-3 rounded-xl text-xs font-black text-gray-500 uppercase';
-            if(mode === 'hardware') { htmlScanner.pause(); document.getElementById('manual-input').focus(); } else { htmlScanner.resume(); }
+            if(mode === 'hardware') { if(htmlScanner) htmlScanner.pause(); document.getElementById('manual-input').focus(); }
+            else { if(htmlScanner) htmlScanner.resume(); }
         }
 
-        document.getElementById('manual-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') { onScan(e.target.value); e.target.value = ''; }});
-
+        // --- ENHANCED SCAN WITH LOADING BAR ---
         async function onScan(code) {
             activeBarcode = code;
+            document.getElementById('scan-loader').style.display = 'block'; // Show Loading Bar
+            document.getElementById('manual-input').placeholder = "FETCHING...";
+
             try {
                 const res = await fetch(`${SCRIPT_URL}?action=getProduct&barcode=${code}`);
                 const data = await res.json();
+                
                 if(currentRole === 'STAFF') {
-                    if(data.error) return alert("Unknown Product");
-                    const idx = cart.findIndex(i => String(i.id) === String(data.id));
-                    if(idx > -1) cart[idx].qty++; else cart.push({...data, qty: 1});
-                    renderCart();
+                    if(data.error) alert("Product Not Found");
+                    else {
+                        const idx = cart.findIndex(i => String(i.id) === String(data.id));
+                        if(idx > -1) cart[idx].qty++; else cart.push({...data, qty: 1});
+                        renderCart();
+                    }
                 } else {
-                    document.getElementById('adm-update-card').classList.toggle('hidden', data.error);
+                    document.getElementById('adm-update-card').classList.toggle('hidden', !!data.error);
                     document.getElementById('adm-new-card').classList.toggle('hidden', !data.error);
                     if(!data.error) {
                         document.getElementById('adm-pname').innerText = data.name;
@@ -189,6 +112,15 @@
                     }
                 }
             } catch (e) { console.error(e); }
+            
+            document.getElementById('scan-loader').style.display = 'none'; // Hide Loading Bar
+            document.getElementById('manual-input').placeholder = "READY FOR SCAN";
+        }
+
+        function closeAdminCard() {
+            document.getElementById('adm-update-card').classList.add('hidden');
+            document.getElementById('adm-new-card').classList.add('hidden');
+            activeBarcode = null;
         }
 
         function renderCart() {
@@ -196,15 +128,14 @@
             list.innerHTML = ''; let total = 0;
             cart.forEach((item, index) => {
                 total += item.price * item.qty;
-                list.innerHTML += `
-                    <div class="bg-white p-5 rounded-3xl flex justify-between items-center shadow-sm">
-                        <div><p class="font-bold text-sm">${item.name}</p><p class="text-blue-600 font-bold">₹${item.price}</p></div>
-                        <div class="flex items-center gap-3">
-                            <button onclick="adjustQty(${index}, -1)" class="w-10 h-10 bg-gray-100 rounded-xl font-bold">-</button>
-                            <span class="font-bold w-4 text-center">${item.qty}</span>
-                            <button onclick="adjustQty(${index}, 1)" class="w-10 h-10 bg-gray-100 rounded-xl font-bold">+</button>
-                        </div>
-                    </div>`;
+                list.innerHTML += `<div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm mb-2">
+                    <div><p class="font-bold text-sm">${item.name}</p><p class="text-blue-600 font-bold">₹${item.price}</p></div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="adjustQty(${index}, -1)" class="w-8 h-8 bg-gray-100 rounded-lg font-bold">-</button>
+                        <span class="font-bold">${item.qty}</span>
+                        <button onclick="adjustQty(${index}, 1)" class="w-8 h-8 bg-gray-100 rounded-lg font-bold">+</button>
+                    </div>
+                </div>`;
             });
             document.getElementById('empty-cart').classList.toggle('hidden', cart.length > 0);
             document.getElementById('checkout-bar').classList.toggle('hidden', cart.length === 0);
@@ -221,27 +152,25 @@
             setBtnLoading('checkout-btn', true);
             try {
                 await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'checkoutCart', items: cart, user: currentUser }) });
-                alert("Sold Successfully!"); cart = []; renderCart();
-            } catch (e) { alert("Checkout Failed"); }
+                alert("Sold!"); cart = []; renderCart();
+            } catch (e) { alert("Error"); }
             setBtnLoading('checkout-btn', false);
         }
 
         async function adminSave(type) {
             const btnId = type === 'update' ? 'adm-save-btn' : 'adm-add-btn';
             setBtnLoading(btnId, true);
-            let data = { 
+            let payload = { 
                 user: currentUser, barcode: activeBarcode, 
                 action: type === 'update' ? 'adminUpdate' : 'addProduct',
-                name: document.getElementById('new-name').value,
+                name: type === 'update' ? document.getElementById('adm-pname').innerText : document.getElementById('new-name').value,
                 stock: document.getElementById(type === 'update' ? 'adm-stock' : 'new-stock').value,
                 price: document.getElementById(type === 'update' ? 'adm-price' : 'new-price').value
             };
             try {
-                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data) });
-                alert("Success");
-                document.getElementById('adm-update-card').classList.add('hidden');
-                document.getElementById('adm-new-card').classList.add('hidden');
-            } catch (e) { alert("Save Failed"); }
+                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+                alert("Saved!"); closeAdminCard();
+            } catch (e) { alert("Failed"); }
             setBtnLoading(btnId, false);
         }
 
@@ -258,14 +187,94 @@
                 const res = await fetch(`${SCRIPT_URL}?action=getTodayLogs&user=${currentUser}&role=${currentRole}`);
                 const data = await res.json();
                 document.getElementById('activity-log').innerHTML = data.map(l => `
-                    <div class="bg-white p-4 rounded-xl border-l-4 border-blue-500 flex justify-between items-center text-xs shadow-sm">
-                        <span><b>${l.user}</b>: ${l.desc}</span>
-                        <span class="text-gray-300 font-bold">${l.time}</span>
+                    <div class="bg-white p-3 rounded-xl border-l-4 border-blue-500 flex justify-between items-center text-[10px] mb-2 shadow-sm">
+                        <span><b>${l.user}</b>: ${l.desc}</span><span class="text-gray-300 uppercase font-black">${l.time}</span>
                     </div>`).join('');
             } catch (e) { console.error(e); }
         }
-
-        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
     </script>
+</head>
+
+<body class="bg-gray-50 min-h-screen">
+    <div id="login-view" class="h-screen flex items-center justify-center p-6">
+        <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-sm">
+            <h1 class="text-3xl font-black text-blue-600 mb-8 text-center italic">StockFlow Pro</h1>
+            <input type="text" id="username" placeholder="Username" class="w-full p-4 bg-gray-50 rounded-2xl mb-3 outline-none border border-transparent focus:border-blue-500">
+            <input type="password" id="password" placeholder="Password" class="w-full p-4 bg-gray-50 rounded-2xl mb-6 outline-none border border-transparent focus:border-blue-500">
+            <button id="login-btn" onclick="handleLogin()" class="flex items-center justify-center w-full bg-blue-600 text-white py-4 rounded-2xl font-bold">
+                <div class="btn-spinner"></div><span class="btn-text">Login</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="main-app" class="hidden flex flex-col h-screen">
+        <header class="bg-white border-b p-4 flex justify-between items-center sticky top-0 z-50">
+            <h1 class="font-black text-blue-600 leading-none">STOCKFLOW</h1>
+            <span id="role-tag" class="text-[9px] font-bold text-gray-400 uppercase tracking-widest"></span>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-4 pb-32">
+            <div id="tab-content-scan">
+                <div class="flex p-1 bg-gray-200 rounded-2xl mb-4">
+                    <button onclick="switchScanner('camera')" class="flex-1 py-3 rounded-xl text-[10px] font-black bg-white shadow uppercase">Camera</button>
+                    <button onclick="switchScanner('hardware')" class="flex-1 py-3 rounded-xl text-[10px] font-black text-gray-500 uppercase">Dedicated Gun</button>
+                </div>
+
+                <div id="camera-box" class="rounded-3xl overflow-hidden shadow-lg border-4 border-white mb-4"><div id="reader"></div></div>
+                <div id="hardware-box" class="hidden mb-4">
+                    <div id="scan-loader"><div></div></div>
+                    <input type="text" id="manual-input" onkeypress="if(event.key==='Enter'){onScan(this.value); this.value='';}" class="w-full p-6 bg-white rounded-b-3xl font-black text-2xl text-center outline-none" placeholder="READY FOR SCAN">
+                </div>
+
+                <div id="admin-view" class="hidden">
+                    <div id="adm-update-card" class="bg-white p-6 rounded-3xl shadow-lg border-t-8 border-blue-600 relative hidden">
+                        <button onclick="closeAdminCard()" class="absolute top-2 right-4 text-gray-300 font-bold text-xl">×</button>
+                        <p id="adm-pname" class="font-bold text-lg mb-4 pr-6"></p>
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <input type="number" id="adm-stock" class="w-full p-4 bg-gray-50 rounded-xl font-bold">
+                            <input type="number" id="adm-price" class="w-full p-4 bg-gray-50 rounded-xl font-bold">
+                        </div>
+                        <button id="adm-save-btn" onclick="adminSave('update')" class="flex items-center justify-center w-full bg-blue-600 text-white py-4 rounded-xl font-bold">
+                            <div class="btn-spinner"></div><span class="btn-text">Update Stock</span>
+                        </button>
+                    </div>
+
+                    <div id="adm-new-card" class="bg-white p-6 rounded-3xl shadow-lg border-t-8 border-green-500 relative hidden">
+                        <button onclick="closeAdminCard()" class="absolute top-2 right-4 text-gray-300 font-bold text-xl">×</button>
+                        <h3 class="text-green-600 font-black text-[10px] uppercase mb-4 tracking-widest pr-6">New Item Detected</h3>
+                        <input type="text" id="new-name" placeholder="Item Name" class="w-full p-4 bg-gray-50 rounded-xl mb-4 font-bold">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <input type="number" id="new-stock" placeholder="Stock" class="w-full p-4 bg-gray-50 rounded-xl font-bold">
+                            <input type="number" id="new-price" placeholder="Price ₹" class="w-full p-4 bg-gray-50 rounded-xl font-bold">
+                        </div>
+                        <button id="adm-add-btn" onclick="adminSave('add')" class="flex items-center justify-center w-full bg-green-600 text-white py-4 rounded-xl font-bold">
+                            <div class="btn-spinner"></div><span class="btn-text">Register Item</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="staff-view" class="hidden">
+                    <div id="cart-list"></div>
+                    <div id="empty-cart" class="text-center py-20 text-gray-300 italic">Scan a barcode to begin...</div>
+                </div>
+            </div>
+
+            <div id="tab-content-history" class="hidden">
+                <div id="activity-log"></div>
+            </div>
+        </main>
+
+        <div id="checkout-bar" class="fixed bottom-20 left-4 right-4 bg-gray-900 p-5 rounded-3xl shadow-2xl hidden flex justify-between items-center z-40">
+            <span id="total-val" class="text-2xl font-black text-white">₹0</span>
+            <button id="checkout-btn" onclick="checkout()" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold flex items-center">
+                <div class="btn-spinner"></div><span class="btn-text">Confirm Sale</span>
+            </button>
+        </div>
+
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex h-20 z-50">
+            <button onclick="showTab('scan')" id="tab-btn-scan" class="flex-1 flex flex-col items-center justify-center active-tab"><span class="text-[9px] font-black uppercase">Scanner</span></button>
+            <button onclick="showTab('history')" id="tab-btn-history" class="flex-1 flex flex-col items-center justify-center text-gray-400"><span class="text-[9px] font-black uppercase">History</span></button>
+        </nav>
+    </div>
 </body>
 </html>
