@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stockflow-v5';
+const CACHE_NAME = 'stockflow-v6';
 const ASSETS = [
   './',
   './index.html',
