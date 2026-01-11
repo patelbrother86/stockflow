@@ -4,173 +4,167 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>StockFlow Pro</title>
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        .loader-overlay { background: rgba(0,0,0,0.7); display: none; }
-        .active-tab { color: #2563eb; border-top: 3px solid #2563eb; }
+        .loader-overlay { background: rgba(0,0,0,0.8); display: none; backdrop-filter: blur(4px); }
+        .active-tab { color: #2563eb; border-top: 4px solid #2563eb; background: #eff6ff; }
+        #reader { width: 100% !important; border: none !important; }
+        #reader__dashboard_section_csr button { background: #2563eb !important; color: white !important; border-radius: 8px !important; padding: 10px !important; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-gray-50 min-h-screen select-none">
 
     <div id="loader" class="loader-overlay fixed inset-0 z-[100] flex flex-col items-center justify-center text-white">
-        <div class="w-12 h-12 border-4 border-t-blue-500 border-gray-300 rounded-full animate-spin mb-4"></div>
-        <p class="font-bold tracking-widest text-sm">PROCESSING...</p>
+        <div class="w-14 h-14 border-4 border-t-blue-500 border-gray-200 rounded-full animate-spin mb-4"></div>
+        <p class="font-black tracking-tighter text-lg">STOCKFLOW UPDATING...</p>
     </div>
 
     <div id="login-view" class="h-screen flex items-center justify-center p-6">
-        <div class="bg-white p-8 rounded-3xl shadow-xl w-full max-w-sm">
-            <h1 class="text-2xl font-black text-blue-600 mb-6 text-center italic">StockFlow Pro</h1>
-            <input type="text" id="username" placeholder="Username" class="w-full p-4 bg-gray-50 rounded-xl mb-3 outline-blue-500">
-            <input type="password" id="password" placeholder="Password" class="w-full p-4 bg-gray-50 rounded-xl mb-6 outline-blue-500">
-            <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg">Login</button>
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-sm border border-gray-100">
+            <h1 class="text-3xl font-black text-blue-600 mb-2 text-center italic">StockFlow Pro</h1>
+            <p class="text-center text-gray-400 text-sm mb-8">Inventory Management System</p>
+            <input type="text" id="username" placeholder="Username" class="w-full p-4 bg-gray-50 rounded-2xl mb-3 outline-blue-500 font-medium">
+            <input type="password" id="password" placeholder="Password" class="w-full p-4 bg-gray-50 rounded-2xl mb-6 outline-blue-500 font-medium">
+            <button onclick="handleLogin()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg shadow-lg active:scale-95 transition-all">Login</button>
         </div>
     </div>
 
     <div id="main-app" class="hidden flex flex-col h-screen">
-        <header class="bg-white border-b p-4 flex justify-between items-center">
-            <h1 class="font-black text-blue-600">STOCKFLOW</h1>
-            <span id="role-tag" class="text-[10px] font-bold bg-blue-100 text-blue-600 px-2 py-1 rounded-full uppercase"></span>
+        <header class="bg-white border-b p-4 flex justify-between items-center sticky top-0 z-50">
+            <div>
+                <h1 class="font-black text-blue-600 leading-none">STOCKFLOW</h1>
+                <span id="role-tag" class="text-[9px] font-black text-gray-400 uppercase tracking-widest"></span>
+            </div>
+            <button onclick="location.reload()" class="bg-gray-100 p-2 rounded-xl text-gray-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            </button>
         </header>
 
-        <main class="flex-1 overflow-y-auto p-4 pb-24">
+        <main class="flex-1 overflow-y-auto p-4 pb-32">
             
             <div id="tab-content-scan">
-                <div class="flex p-1 bg-gray-200 rounded-xl mb-4">
-                    <button id="btn-cam" onclick="switchScanner('camera')" class="flex-1 py-2 rounded-lg text-sm font-bold bg-white shadow">Camera</button>
-                    <button id="btn-hard" onclick="switchScanner('hardware')" class="flex-1 py-2 rounded-lg text-sm font-bold text-gray-500">Scanner Gun</button>
+                <div class="flex p-1 bg-gray-200 rounded-2xl mb-4">
+                    <button id="btn-cam" onclick="switchScanner('camera')" class="flex-1 py-3 rounded-xl text-xs font-black bg-white shadow uppercase tracking-wider">Camera</button>
+                    <button id="btn-hard" onclick="switchScanner('hardware')" class="flex-1 py-3 rounded-xl text-xs font-black text-gray-500 uppercase tracking-wider">Gun Scanner</button>
                 </div>
 
-                <div id="camera-box" class="rounded-2xl overflow-hidden shadow-inner mb-4"><div id="reader"></div></div>
-                <div id="hardware-box" class="hidden mb-4">
-                    <input type="text" id="manual-input" class="w-full p-5 bg-white border-2 border-blue-500 rounded-2xl font-bold text-center" placeholder="AWAITING SCAN...">
+                <div id="camera-box" class="rounded-3xl overflow-hidden shadow-2xl mb-6 border-4 border-white"><div id="reader"></div></div>
+                <div id="hardware-box" class="hidden mb-6">
+                    <input type="text" id="manual-input" class="w-full p-6 bg-white border-4 border-blue-500 rounded-3xl font-black text-2xl text-center outline-none" placeholder="READY TO SCAN">
                 </div>
 
-                <div id="staff-view" class="hidden">
-                    <h2 class="font-black text-gray-800 mb-3 uppercase text-xs tracking-widest">Current Order</h2>
-                    <div id="cart-list" class="space-y-2"></div>
-                    <div id="empty-cart" class="text-center py-10 text-gray-300 italic">No items scanned.</div>
+                <div id="staff-view" class="hidden animate-in fade-in duration-500">
+                    <h2 class="font-black text-gray-800 mb-4 uppercase text-[10px] tracking-widest border-b pb-2">Cart Items</h2>
+                    <div id="cart-list" class="space-y-3"></div>
+                    <div id="empty-cart" class="text-center py-16 text-gray-300 italic font-medium">Scan product barcodes to add...</div>
                 </div>
 
                 <div id="admin-view" class="hidden">
-                    <div id="adm-update-card" class="bg-white p-5 rounded-2xl shadow-md border-t-4 border-blue-600 hidden">
-                        <p id="adm-pname" class="font-bold text-lg mb-4"></p>
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            <div><label class="text-[10px] font-bold text-gray-400 uppercase">Stock</label><input type="number" id="adm-stock" class="w-full p-3 bg-gray-100 rounded-lg"></div>
-                            <div><label class="text-[10px] font-bold text-gray-400 uppercase">Price (₹)</label><input type="number" id="adm-price" class="w-full p-3 bg-gray-100 rounded-lg"></div>
+                    <div id="adm-update-card" class="bg-white p-6 rounded-3xl shadow-xl border-t-8 border-blue-600 hidden">
+                        <p id="adm-pname" class="font-black text-xl mb-4 text-gray-800"></p>
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">New Stock</label><input type="number" id="adm-stock" class="w-full p-4 bg-gray-50 rounded-2xl font-bold text-lg"></div>
+                            <div><label class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Price (₹)</label><input type="number" id="adm-price" class="w-full p-4 bg-gray-50 rounded-2xl font-bold text-lg"></div>
                         </div>
-                        <button onclick="adminSave('update')" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold">Update Inventory</button>
+                        <button onclick="adminSave('update')" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black shadow-lg">UPDATE INVENTORY</button>
                     </div>
 
-                    <div id="adm-new-card" class="bg-white p-5 rounded-2xl shadow-md border-t-4 border-green-500 hidden">
-                        <h3 class="font-black text-green-600 uppercase text-[10px] mb-3">Register New Product</h3>
-                        <input type="text" id="new-name" placeholder="Item Name" class="w-full p-3 bg-gray-100 rounded-lg mb-3">
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            <input type="number" id="new-stock" placeholder="Initial Stock" class="w-full p-3 bg-gray-100 rounded-lg">
-                            <input type="number" id="new-price" placeholder="Price ₹" class="w-full p-3 bg-gray-100 rounded-lg">
+                    <div id="adm-new-card" class="bg-white p-6 rounded-3xl shadow-xl border-t-8 border-green-500 hidden">
+                        <h3 class="font-black text-green-600 uppercase text-[10px] mb-4 tracking-widest">Register New Product</h3>
+                        <input type="text" id="new-name" placeholder="Product Name" class="w-full p-4 bg-gray-50 rounded-2xl mb-4 font-bold">
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <input type="number" id="new-stock" placeholder="Qty" class="w-full p-4 bg-gray-50 rounded-2xl font-bold">
+                            <input type="number" id="new-price" placeholder="Price ₹" class="w-full p-4 bg-gray-50 rounded-2xl font-bold">
                         </div>
-                        <button onclick="adminSave('add')" class="w-full bg-green-600 text-white py-4 rounded-xl font-bold">Add to System</button>
+                        <button onclick="adminSave('add')" class="w-full bg-green-600 text-white py-4 rounded-2xl font-black shadow-lg">CREATE PRODUCT</button>
                     </div>
                 </div>
             </div>
 
             <div id="tab-content-history" class="hidden">
-                <h2 class="font-black text-gray-800 mb-4 text-center">TODAY'S ACTIVITY</h2>
-                <div id="activity-log" class="space-y-2"></div>
+                <h2 class="font-black text-gray-800 mb-6 text-center uppercase tracking-widest">Today's Transactions</h2>
+                <div id="activity-log" class="space-y-3"></div>
             </div>
 
         </main>
 
-        <div id="checkout-bar" class="fixed bottom-16 left-0 right-0 bg-white border-t p-4 shadow-2xl hidden animate-bounce-in">
-            <div class="flex justify-between items-center mb-2 px-2">
-                <span class="font-bold text-gray-400 text-sm">Total</span>
-                <span id="total-val" class="text-2xl font-black text-blue-600">₹0</span>
+        <div id="checkout-bar" class="fixed bottom-20 left-4 right-4 bg-blue-600 p-5 rounded-3xl shadow-2xl hidden z-40 transform transition-all">
+            <div class="flex justify-between items-center mb-4 px-2">
+                <span class="font-bold text-blue-200 uppercase text-xs tracking-widest">Total Payable</span>
+                <span id="total-val" class="text-3xl font-black text-white">₹0</span>
             </div>
-            <button onclick="checkout()" class="w-full bg-green-500 text-white py-4 rounded-xl font-black">CONFIRM SALE</button>
+            <button onclick="checkout()" class="w-full bg-white text-blue-600 py-4 rounded-2xl font-black text-lg shadow-xl active:scale-95 transition-all">CONFIRM SALE (₹)</button>
         </div>
 
-        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex h-16 z-[60]">
-            <button onclick="showTab('scan')" id="tab-btn-scan" class="flex-1 flex flex-col items-center justify-center active-tab">
-                <span class="text-[10px] font-bold uppercase tracking-widest mt-1">Scanner</span>
+        <nav class="fixed bottom-0 left-0 right-0 bg-white border-t flex h-20 z-[60] pb-2">
+            <button onclick="showTab('scan')" id="tab-btn-scan" class="flex-1 flex flex-col items-center justify-center active-tab transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+                <span class="text-[9px] font-black uppercase tracking-widest mt-1">Scanner</span>
             </button>
             <button onclick="showTab('history')" id="tab-btn-history" class="flex-1 flex flex-col items-center justify-center text-gray-400">
-                <span class="text-[10px] font-bold uppercase tracking-widest mt-1">History</span>
-            </button>
-            <button onclick="location.reload()" class="flex-1 flex flex-col items-center justify-center text-red-400">
-                <span class="text-[10px] font-bold uppercase tracking-widest mt-1">Exit</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span class="text-[9px] font-black uppercase tracking-widest mt-1">History</span>
             </button>
         </nav>
     </div>
 
     <script>
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx3hIkbs8loGsJ0VQyBtYB4PnJl-Lsv1U83x2ENfDuMkM4g937p7Fu3-tOPgIhzRIGTEg/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx3hIkbs8loGsJ0VQyBtYB4PnJl-Lsv1U83x2ENfDuMkM4g937p7Fu3-tOPgIhzRIGTEg/exec'; // MUST END IN /exec
         let currentUser, currentRole, cart = [], htmlScanner, activeBarcode;
 
         function toggleLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
 
-        function handleLogin() {
-    const u = document.getElementById('username').value;
-    const p = document.getElementById('password').value;
-    
-    toggleLoader(true);
-
-    // Safety timeout: Hide loader after 10 seconds if no response
-    const timeout = setTimeout(() => {
-        toggleLoader(false);
-        alert("Request timed out. Please check your internet or Script URL.");
-    }, 10000);
-
-    fetch(SCRIPT_URL, { 
-        method: 'POST', 
-        mode: 'no-cors', // Add this only if you see "CORS" errors in console
-        body: JSON.stringify({ action: 'login', username: u, password: p }) 
-    })
-    .then(res => res.json())
-    .then(data => {
-        clearTimeout(timeout); // Cancel the timeout
-        toggleLoader(false);
-        if(data.success) {
-            currentUser = data.username; currentRole = data.role;
-            document.getElementById('login-view').classList.add('hidden');
-            document.getElementById('main-app').classList.remove('hidden');
-            document.getElementById('role-tag').innerText = currentRole;
-            if(currentRole === 'STAFF') document.getElementById('staff-view').classList.remove('hidden');
-            else document.getElementById('admin-view').classList.remove('hidden');
-            initScanner();
-        } else {
-            alert("Invalid Username or Password");
+        async function handleLogin() {
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            if(!u || !p) return alert("Fill credentials");
+            
+            toggleLoader(true);
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'login', username: u, password: p })
+                });
+                const data = await response.json();
+                toggleLoader(false);
+                if(data.success) {
+                    currentUser = data.username; currentRole = data.role;
+                    document.getElementById('login-view').classList.add('hidden');
+                    document.getElementById('main-app').classList.remove('hidden');
+                    document.getElementById('role-tag').innerText = `${currentUser} | ${currentRole}`;
+                    if(currentRole === 'STAFF') document.getElementById('staff-view').classList.remove('hidden');
+                    else document.getElementById('admin-view').classList.remove('hidden');
+                    initScanner();
+                } else alert("Wrong credentials");
+            } catch (e) { toggleLoader(false); alert("Error connecting to server. Check your Script URL."); }
         }
-    })
-    .catch((err) => {
-        clearTimeout(timeout);
-        toggleLoader(false);
-        alert("Connection Error: " + err);
-    });
-}
 
         function initScanner() {
-            htmlScanner = new Html5QrcodeScanner("reader", { fps: 15 });
+            htmlScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
             htmlScanner.render(onScan);
         }
 
         function switchScanner(mode) {
             document.getElementById('camera-box').classList.toggle('hidden', mode === 'hardware');
             document.getElementById('hardware-box').classList.toggle('hidden', mode === 'camera');
-            document.getElementById('btn-cam').className = mode === 'camera' ? 'flex-1 py-2 rounded-lg text-sm font-bold bg-white shadow' : 'flex-1 py-2 rounded-lg text-sm font-bold text-gray-500';
-            document.getElementById('btn-hard').className = mode === 'hardware' ? 'flex-1 py-2 rounded-lg text-sm font-bold bg-white shadow' : 'flex-1 py-2 rounded-lg text-sm font-bold text-gray-500';
+            document.getElementById('btn-cam').className = mode === 'camera' ? 'flex-1 py-3 rounded-xl text-xs font-black bg-white shadow uppercase tracking-wider' : 'flex-1 py-3 rounded-xl text-xs font-black text-gray-500 uppercase tracking-wider';
+            document.getElementById('btn-hard').className = mode === 'hardware' ? 'flex-1 py-3 rounded-xl text-xs font-black bg-white shadow uppercase tracking-wider' : 'flex-1 py-3 rounded-xl text-xs font-black text-gray-500 uppercase tracking-wider';
             if(mode === 'hardware') { htmlScanner.pause(); document.getElementById('manual-input').focus(); } else { htmlScanner.resume(); }
         }
 
         document.getElementById('manual-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') { onScan(e.target.value); e.target.value = ''; }});
 
-        function onScan(code) {
+        async function onScan(code) {
             activeBarcode = code;
             toggleLoader(true);
-            fetch(`${SCRIPT_URL}?action=getProduct&barcode=${code}`)
-            .then(res => res.json()).then(data => {
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=getProduct&barcode=${code}`);
+                const data = await res.json();
                 toggleLoader(false);
                 if(currentRole === 'STAFF') {
-                    if(data.error) return alert("Unknown Barcode");
+                    if(data.error) return alert("Item Not Registered");
                     const index = cart.findIndex(i => String(i.id) === String(data.id));
                     if(index > -1) cart[index].qty++; else cart.push({...data, qty: 1});
                     renderCart();
@@ -183,7 +177,7 @@
                         document.getElementById('adm-price').value = data.price;
                     }
                 }
-            });
+            } catch (e) { toggleLoader(false); }
         }
 
         function renderCart() {
@@ -192,12 +186,12 @@
             cart.forEach((item, index) => {
                 total += item.price * item.qty;
                 list.innerHTML += `
-                    <div class="bg-white p-4 rounded-2xl flex justify-between items-center shadow-sm border border-gray-100">
-                        <div><p class="font-bold text-sm">${item.name}</p><p class="text-blue-600 font-bold text-xs">₹${item.price}</p></div>
-                        <div class="flex items-center gap-4">
-                            <button onclick="adjustQty(${index}, -1)" class="w-10 h-10 bg-gray-50 rounded-xl font-bold text-lg">-</button>
-                            <span class="font-black text-blue-600">${item.qty}</span>
-                            <button onclick="adjustQty(${index}, 1)" class="w-10 h-10 bg-gray-50 rounded-xl font-bold text-lg">+</button>
+                    <div class="bg-white p-5 rounded-3xl flex justify-between items-center shadow-sm border border-gray-100 animate-in slide-in-from-right duration-300">
+                        <div><p class="font-black text-gray-800">${item.name}</p><p class="text-blue-600 font-black">₹${item.price}</p></div>
+                        <div class="flex items-center gap-4 bg-gray-50 p-1 rounded-2xl">
+                            <button onclick="adjustQty(${index}, -1)" class="w-10 h-10 bg-white rounded-xl font-black text-xl shadow-sm">-</button>
+                            <span class="font-black text-blue-600 w-4 text-center">${item.qty}</span>
+                            <button onclick="adjustQty(${index}, 1)" class="w-10 h-10 bg-white rounded-xl font-black text-xl shadow-sm">+</button>
                         </div>
                     </div>`;
             });
@@ -212,24 +206,34 @@
             renderCart();
         }
 
-        function checkout() {
+        async function checkout() {
+            if(!confirm("Complete sale?")) return;
             toggleLoader(true);
-            fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'checkoutCart', items: cart, user: currentUser }) })
-            .then(() => { toggleLoader(false); alert("Sale Confirmed!"); cart = []; renderCart(); loadLogs(); });
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'checkoutCart', items: cart, user: currentUser }) });
+                toggleLoader(false); alert("Success!"); cart = []; renderCart();
+            } catch (e) { toggleLoader(false); }
         }
 
-        function adminSave(type) {
-            let data = { user: currentUser, barcode: activeBarcode, action: type === 'update' ? 'adminUpdate' : 'addProduct' };
-            data.name = document.getElementById('new-name').value;
-            data.stock = document.getElementById(type === 'update' ? 'adm-stock' : 'new-stock').value;
-            data.price = document.getElementById(type === 'update' ? 'adm-price' : 'new-price').value;
-            
+        async function adminSave(type) {
+            let data = { 
+                user: currentUser, 
+                barcode: activeBarcode, 
+                action: type === 'update' ? 'adminUpdate' : 'addProduct',
+                name: document.getElementById('new-name').value,
+                stock: document.getElementById(type === 'update' ? 'adm-stock' : 'new-stock').value,
+                price: document.getElementById(type === 'update' ? 'adm-price' : 'new-price').value
+            };
             toggleLoader(true);
-            fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data) })
-            .then(() => { toggleLoader(false); alert("Success!"); loadLogs(); });
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(data) });
+                toggleLoader(false); alert("Inventory Saved!");
+                document.getElementById('adm-update-card').classList.add('hidden');
+                document.getElementById('adm-new-card').classList.add('hidden');
+            } catch (e) { toggleLoader(false); }
         }
 
-        function showTab(tab) {
+        async function showTab(tab) {
             document.getElementById('tab-content-scan').classList.toggle('hidden', tab !== 'scan');
             document.getElementById('tab-content-history').classList.toggle('hidden', tab !== 'history');
             document.getElementById('tab-btn-scan').className = tab === 'scan' ? 'flex-1 flex flex-col items-center justify-center active-tab' : 'flex-1 flex flex-col items-center justify-center text-gray-400';
@@ -237,17 +241,23 @@
             if(tab === 'history') loadLogs();
         }
 
-        function loadLogs() {
+        async function loadLogs() {
             toggleLoader(true);
-            fetch(`${SCRIPT_URL}?action=getTodayLogs&user=${currentUser}&role=${currentRole}`)
-            .then(res => res.json()).then(data => {
+            try {
+                const res = await fetch(`${SCRIPT_URL}?action=getTodayLogs&user=${currentUser}&role=${currentRole}`);
+                const data = await res.json();
                 toggleLoader(false);
-                document.getElementById('activity-log').innerHTML = data.length ? data.map(l => `
-                    <div class="bg-white p-3 rounded-xl border-l-4 border-blue-500 flex justify-between text-[11px] shadow-sm">
-                        <span><b class="text-blue-600">${l.user}</b> ${l.desc}</span>
-                        <span class="text-gray-400 font-bold">${l.time}</span>
-                    </div>`).join('') : '<p class="text-center text-gray-300 py-10">No activity logged yet.</p>';
-            }).catch(() => toggleLoader(false));
+                document.getElementById('activity-log').innerHTML = data.map(l => `
+                    <div class="bg-white p-4 rounded-2xl border-l-8 border-blue-500 flex justify-between items-center shadow-sm">
+                        <span class="text-xs font-bold"><b class="text-blue-600">${l.user}</b> ${l.desc}</span>
+                        <span class="text-[10px] font-black text-gray-300">${l.time}</span>
+                    </div>`).join('');
+            } catch (e) { toggleLoader(false); }
+        }
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
         }
     </script>
 </body>
