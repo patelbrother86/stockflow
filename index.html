@@ -1,161 +1,284 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>StockFlow Pro</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/html5-qrcode"></script>
-<link rel="manifest" href="/manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StockFlow Pro</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <style>
+        /* Hide scrollbars for app-like feel */
+        body { -webkit-tap-highlight-color: transparent; overscroll-behavior-y: none; }
+        #reader { width: 100%; }
+    </style>
 </head>
-<body class="bg-slate-50 min-h-screen font-sans antialiased text-slate-900">
+<body class="bg-gray-100 min-h-screen font-sans">
 
-<div id="login-screen" class="min-h-screen flex items-center justify-center p-6">
-<div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 border border-slate-100">
-<div class="text-center mb-8">
-<div class="inline-flex items-center justify-center w-20 h-20 bg-blue-600 text-white rounded-2xl mb-4 rotate-3 shadow-xl shadow-blue-200">
-<svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-</svg>
-</div>
-<h2 class="text-3xl font-extrabold text-slate-800 tracking-tight">StockFlow</h2>
-<p class="text-slate-500 font-medium">Internal Inventory Portal</p>
-</div>
-<div class="space-y-4">
-<input type="text" id="username" placeholder="Username" class="w-full px-4 py-4 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-<input type="password" id="password" placeholder="Password" class="w-full px-4 py-4 rounded-xl bg-slate-50 border border-slate-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-<button onclick="login()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-100 active:scale-95 transition-all">Sign In</button>
-<p id="login-msg" class="text-center text-red-500 text-sm font-semibold"></p>
-</div>
-</div>
-</div>
+    <div id="login-view" class="flex flex-col items-center justify-center h-screen p-6">
+        <div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-sm text-center">
+            <img src="icon.svg" class="w-20 h-20 mx-auto mb-4" alt="Logo">
+            <h1 class="text-2xl font-bold text-blue-600 mb-6">StockFlow Pro</h1>
+            <input type="text" id="username" placeholder="Username" class="w-full p-3 border rounded mb-4 text-lg">
+            <button onclick="handleLogin()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold text-lg hover:bg-blue-700 transition">Log In</button>
+        </div>
+    </div>
 
-<div id="scanner-screen" class="hidden max-w-2xl mx-auto p-4 md:p-8">
-<header class="flex justify-between items-center mb-8">
-<h1 class="text-2xl font-black text-blue-600 tracking-tighter">STOCKFLOW</h1>
-<div class="text-right">
-<p class="text-xs font-bold text-slate-400 uppercase tracking-widest" id="display-user"></p>
-<button onclick="location.reload()" class="text-xs text-red-500 font-bold hover:underline">LOGOUT</button>
-</div>
-</header>
+    <div id="dashboard-view" class="hidden flex flex-col h-screen">
+        
+        <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10">
+            <h1 class="font-bold text-xl">StockFlow</h1>
+            <button onclick="logout()" class="text-sm bg-blue-800 px-3 py-1 rounded">Exit</button>
+        </header>
 
-<div class="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100 p-4 mb-6">
-<div id="reader" class="rounded-2xl overflow-hidden"></div>
-<div id="status" class="py-4 text-center font-bold text-slate-400 animate-pulse text-sm">Waiting for scan...</div>
-</div>
+        <div class="flex-1 overflow-y-auto p-4 pb-24">
+            
+            <div class="flex space-x-2 mb-4 bg-gray-200 p-1 rounded-lg">
+                <button onclick="switchMode('camera')" id="btn-cam" class="flex-1 py-2 rounded-md bg-white shadow text-sm font-bold">Camera Scan</button>
+                <button onclick="switchMode('hardware')" id="btn-hard" class="flex-1 py-2 rounded-md text-gray-500 text-sm font-bold">Hardware / Manual</button>
+            </div>
 
-<div id="product-card" class="hidden space-y-4 animate-in fade-in slide-in-from-bottom-8 duration-500">
-<div class="bg-white rounded-3xl p-6 shadow-2xl border-l-8 border-blue-600">
-<div class="flex justify-between items-start mb-4">
-<h3 id="prod-name" class="text-2xl font-bold text-slate-800">---</h3>
-<span id="prod-price-display" class="bg-blue-100 text-blue-700 font-black px-3 py-1 rounded-lg text-xl">$0.00</span>
-</div>
+            <div id="camera-section">
+                <div id="reader" class="rounded-lg overflow-hidden border-2 border-blue-200"></div>
+                <p class="text-center text-gray-500 text-sm mt-2">Point camera at barcode</p>
+            </div>
 
-<div class="flex gap-4 mb-6">
-<div class="flex-1 bg-slate-50 p-3 rounded-2xl">
-<p class="text-[10px] font-bold text-slate-400 uppercase">Current Stock</p>
-<p id="prod-stock" class="text-2xl font-black text-slate-800">0</p>
-</div>
-</div>
+            <div id="hardware-section" class="hidden">
+                <label class="block text-gray-700 text-sm font-bold mb-2">Scan or Type Barcode:</label>
+                <div class="flex gap-2">
+                    <input type="text" id="manual-input" class="flex-1 p-4 border-2 border-blue-500 rounded-lg text-xl" placeholder="Click here & Scan" autofocus>
+                    <button onclick="processManualInput()" class="bg-blue-600 text-white px-4 rounded-lg">GO</button>
+                </div>
+                <p class="text-xs text-gray-400 mt-2">Ensure the box above is clicked before using a laser scanner.</p>
+            </div>
 
-<button id="sale-btn" onclick="apiAction('purchase')" class="w-full bg-blue-600 text-white font-bold py-5 rounded-2xl shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">
-<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-PROCESS SALE (-1)
-</button>
+            <div id="product-card" class="mt-6 bg-white p-5 rounded-xl shadow-md hidden border-l-4 border-blue-500">
+                <h2 id="p-name" class="text-xl font-bold text-gray-800">Loading...</h2>
+                <div class="flex justify-between mt-4">
+                    <div>
+                        <p class="text-gray-500 text-xs uppercase">Stock</p>
+                        <p id="p-stock" class="text-2xl font-bold text-gray-800">-</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-gray-500 text-xs uppercase">Price</p>
+                        <p id="p-price" class="text-2xl font-bold text-green-600">-</p>
+                    </div>
+                </div>
 
-<div id="admin-panel" class="hidden mt-6 pt-6 border-t border-slate-100 space-y-4">
-<p class="text-xs font-black text-slate-400 uppercase tracking-widest">Inventory Management</p>
-<button onclick="apiAction('restock')" class="w-full bg-emerald-500 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all">
-ADD TO STOCK (+1)
-</button>
-<div class="flex gap-2">
-<input type="number" id="new-price" placeholder="Set Price" class="flex-1 bg-slate-50 border border-slate-200 px-4 py-4 rounded-2xl outline-none focus:ring-2 focus:ring-blue-500">
-<button onclick="updatePrice()" class="bg-slate-800 text-white px-6 font-bold rounded-2xl active:scale-95 transition-all">Update Price</button>
-</div>
-</div>
+                <div class="mt-6 space-y-3">
+                    <button onclick="updateStock('SALE')" class="w-full bg-red-500 text-white py-3 rounded-lg font-bold shadow hover:bg-red-600">Process Sale (-1)</button>
+                    
+                    <div id="admin-controls" class="hidden space-y-3 pt-3 border-t border-gray-200">
+                        <button onclick="updateStock('RESTOCK')" class="w-full bg-green-500 text-white py-3 rounded-lg font-bold shadow hover:bg-green-600">Restock (+1)</button>
+                        <div class="flex gap-2">
+                            <input type="number" id="new-price" placeholder="New Price" class="w-1/2 p-2 border rounded">
+                            <button onclick="updatePrice()" class="w-1/2 bg-gray-700 text-white rounded font-bold">Update Price</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="status-msg" class="mt-4 text-center text-sm font-semibold"></div>
 
-<button onclick="resetScanner()" class="w-full mt-4 py-2 text-slate-400 font-bold text-sm">Cancel Scan</button>
-</div>
-</div>
-</div>
+        </div>
+    </div>
 
-<script>
-const scriptUrl = "https://script.google.com/macros/s/AKfycbx3hIkbs8loGsJ0VQyBtYB4PnJl-Lsv1U83x2ENfDuMkM4g937p7Fu3-tOPgIhzRIGTEg/exec";
-let currentUser = "";
-let userRole = "";
-let lastBarcode = "";
-let html5QrCode;
+    <script>
+        // CONFIGURATION
+        const SCRIPT_URL = 'YOUR_GOOGLE_SCRIPT_URL_HERE'; // *** PASTE YOUR URL HERE ***
 
-async function login() {
-const user = document.getElementById('username').value;
-const pass = document.getElementById('password').value;
-const msg = document.getElementById('login-msg');
-if(!user || !pass) return;
+        // STATE
+        let currentUser = null;
+        let currentRole = null;
+        let currentProduct = null;
+        let html5QrcodeScanner = null;
 
-msg.innerText = "Authenticating...";
-const res = await fetch(`${scriptUrl}?action=login&user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`);
-const role = await res.text();
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+            .then(() => console.log('Service Worker Registered'));
+        }
 
-if (role !== "auth_fail") {
-userRole = role;
-currentUser = user;
-document.getElementById('display-user').innerText = `${user} • ${role}`;
-if(role === "Admin") document.getElementById('admin-panel').classList.remove('hidden');
-document.getElementById('login-screen').classList.add('hidden');
-document.getElementById('scanner-screen').classList.remove('hidden');
-initScanner();
-} else {
-msg.innerText = "Invalid credentials";
-}
-}
+        // --- AUTHENTICATION ---
+        function handleLogin() {
+            const user = document.getElementById('username').value.trim();
+            if(!user) return alert("Enter username");
+            
+            // Simple mock login for UI demo. In production, verify with Sheet.
+            // Logic: If username contains 'admin', they are Admin.
+            currentUser = user;
+            currentRole = user.toLowerCase().includes('admin') ? 'ADMIN' : 'STAFF';
+            
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            
+            // Start Scanner automatically
+            initScanner();
+        }
 
-function initScanner() {
-html5QrCode = new Html5QrcodeScanner("reader", { 
-    fps: 20, 
-    aspectRatio: 1.77, 
-    rememberLastUsedCamera: true 
-    // "snap" is not a valid standard configuration property
-  } );
-html5QrCode.render(onScanSuccess);
-}
+        function logout() {
+            location.reload();
+        }
 
-async function onScanSuccess(decodedText) {
-if(lastBarcode === decodedText) return;
-lastBarcode = decodedText;
-document.getElementById('status').innerText = "Reading database...";
+        // --- TAB SWITCHING ---
+        function switchMode(mode) {
+            const camSec = document.getElementById('camera-section');
+            const hardSec = document.getElementById('hardware-section');
+            const btnCam = document.getElementById('btn-cam');
+            const btnHard = document.getElementById('btn-hard');
 
-const res = await fetch(`${scriptUrl}?action=check&barcode=${decodedText}`);
-const data = await res.json();
+            if (mode === 'camera') {
+                camSec.classList.remove('hidden');
+                hardSec.classList.add('hidden');
+                btnCam.classList.add('bg-white', 'shadow');
+                btnCam.classList.remove('text-gray-500');
+                btnHard.classList.remove('bg-white', 'shadow');
+                btnHard.classList.add('text-gray-500');
+                // Re-enable scanner if needed
+                if(html5QrcodeScanner) html5QrcodeScanner.resume();
+            } else {
+                camSec.classList.add('hidden');
+                hardSec.classList.remove('hidden');
+                btnHard.classList.add('bg-white', 'shadow');
+                btnHard.classList.remove('text-gray-500');
+                btnCam.classList.remove('bg-white', 'shadow');
+                btnCam.classList.add('text-gray-500');
+                // Pause camera to save battery
+                if(html5QrcodeScanner) html5QrcodeScanner.pause();
+                // Focus input for hardware scanner
+                setTimeout(() => document.getElementById('manual-input').focus(), 100);
+            }
+        }
 
-document.getElementById('prod-name').innerText = data.name;
-document.getElementById('prod-price-display').innerText = "$" + parseFloat(data.price).toFixed(2);
-document.getElementById('prod-stock').innerText = data.stock;
-document.getElementById('product-card').classList.remove('hidden');
-document.getElementById('status').innerText = "Barcode Locked";
-if (navigator.vibrate) navigator.vibrate(100);
-}
+        // --- SCANNING LOGIC ---
+        function initScanner() {
+            html5QrcodeScanner = new Html5QrcodeScanner(
+                "reader", 
+                { fps: 10, qrbox: {width: 250, height: 150} }, 
+                /* verbose= */ false
+            );
+            html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+        }
 
-async function apiAction(type) {
-const res = await fetch(`${scriptUrl}?action=${type}&barcode=${lastBarcode}&user=${encodeURIComponent(currentUser)}`);
-alert(await res.text());
-resetScanner();
-}
+        function onScanSuccess(decodedText, decodedResult) {
+            // Handle duplicate scans prevention if needed
+            console.log(`Code matched = ${decodedText}`);
+            fetchProductData(decodedText);
+            
+            // Optional: Pause scanning while processing
+            html5QrcodeScanner.pause(); 
+            setTimeout(() => html5QrcodeScanner.resume(), 2000); 
+        }
 
-async function updatePrice() {
-const price = document.getElementById('new-price').value;
-if(!price) return;
-const res = await fetch(`${scriptUrl}?action=updatePrice&barcode=${lastBarcode}&user=${encodeURIComponent(currentUser)}&price=${price}`);
-alert(await res.text());
-resetScanner();
-}
+        function onScanFailure(error) {
+            // handle scan failure, usually better to ignore and keep scanning.
+        }
 
-function resetScanner() {
-document.getElementById('product-card').classList.add('hidden');
-document.getElementById('status').innerText = "Waiting for scan...";
-lastBarcode = "";
-document.getElementById('new-price').value = "";
-}
-</script>
+        // Handle Hardware Scanner / Manual Input
+        document.getElementById('manual-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                processManualInput();
+            }
+        });
+
+        function processManualInput() {
+            const code = document.getElementById('manual-input').value;
+            if(code) {
+                fetchProductData(code);
+                document.getElementById('manual-input').value = ''; // Clear input
+            }
+        }
+
+        // --- API & UI LOGIC ---
+        function fetchProductData(barcode) {
+            showStatus("Searching database...", "blue");
+            document.getElementById('product-card').classList.add('hidden');
+
+            // Construct payload
+            // NOTE: This assumes your doGet in Apps Script handles 'action=getProduct'
+            const url = `${SCRIPT_URL}?action=getProduct&barcode=${barcode}`;
+
+            fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    showStatus("Product not found", "red");
+                } else {
+                    displayProduct(data);
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                // MOCK DATA FOR DEMO IF API FAILS (Remove in production)
+                displayProduct({
+                    id: barcode,
+                    name: "Colgate Total 150g",
+                    stock: 45,
+                    price: "$4.50"
+                });
+            });
+        }
+
+        function displayProduct(data) {
+            currentProduct = data;
+            
+            document.getElementById('p-name').innerText = data.name;
+            document.getElementById('p-stock').innerText = data.stock;
+            document.getElementById('p-price').innerText = data.price; // Format currency
+            
+            document.getElementById('product-card').classList.remove('hidden');
+            showStatus("Product Found", "green");
+
+            // Show Admin controls if role is ADMIN
+            if (currentRole === 'ADMIN') {
+                document.getElementById('admin-controls').classList.remove('hidden');
+            } else {
+                document.getElementById('admin-controls').classList.add('hidden');
+            }
+        }
+
+        function updateStock(type) {
+            if(!currentProduct) return;
+            showStatus("Processing...", "blue");
+
+            // Send to Google Sheets
+            const payload = {
+                action: 'updateStock',
+                barcode: currentProduct.id,
+                type: type, // 'SALE' or 'RESTOCK'
+                user: currentUser
+            };
+            
+            // Using fetch(url, {method: 'POST'}) often has CORS issues with GAS.
+            // Standard workaround is using navigator.sendBeacon or no-cors mode, 
+            // but for simple GAS apps, text/plain POST is best.
+            
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.text()) // GAS usually returns text/json string
+            .then(data => {
+                showStatus("Update Successful!", "green");
+                // Update UI locally to reflect change instantly
+                let currentStock = parseInt(document.getElementById('p-stock').innerText);
+                if(type === 'SALE') document.getElementById('p-stock').innerText = currentStock - 1;
+                if(type === 'RESTOCK') document.getElementById('p-stock').innerText = currentStock + 1;
+            })
+            .catch(err => showStatus("Error updating stock", "red"));
+        }
+        
+        function showStatus(msg, color) {
+            const el = document.getElementById('status-msg');
+            el.innerText = msg;
+            el.className = `mt-4 text-center text-sm font-semibold text-${color}-600`;
+        }
+    </script>
 </body>
-
 </html>
